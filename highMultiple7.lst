@@ -1,0 +1,51 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14                                      ;B4. A string of words S is given. Compute string D containing only high bytes multiple of 7 from string S.
+    15                                      ;If S = 1735h, 0778h, 0E20h => D = 07h, 0Eh
+    16                                  
+    17 00000000 35177807200E                s dw 1735h,0778h,0E20h
+    18                                      lens equ ($-s)/2
+    19 00000006 07                          sapte db 7
+    20 00000007 FD<rept>                    d times lens db -3
+    21                                      ; our code starts here
+    22                                  segment code use32 class=code
+    23                                      start:
+    24                                          ; ...
+    25 00000000 BE01000000                  mov esi,1
+    26 00000005 BF00000000                  mov edi,0
+    27                                  
+    28 0000000A B903000000                  mov ecx,lens 
+    29                                      
+    30                                      myLoop:
+    31 0000000F 8A86[00000000]                  mov al,[s+esi]
+    32 00000015 88C3                            mov bl,al
+    33 00000017 6698                            cbw
+    34 00000019 F63D[06000000]                  idiv byte[sapte]
+    35 0000001F 80FC00                          cmp ah,0
+    36                                              
+    37 00000022 7402                                JE multiplu
+    38 00000024 750C                                JNE nonMultiplu
+    39                                              multiplu:
+    40 00000026 889F[07000000]                          mov [d+edi],bl
+    41 0000002C 47                                      inc edi
+    42 0000002D 83C602                                  add esi,2
+    43 00000030 EB03                                    jmp endrep
+    44                                              nonMultiplu:
+    45 00000032 83C602                                  add esi,2
+    46                                                  
+    47                                          endrep:
+    48 00000035 E2D8                           loop myLoop
+    49                                          ; exit(0)
+    50 00000037 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    51 00000039 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

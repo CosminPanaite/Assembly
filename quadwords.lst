@@ -1,0 +1,44 @@
+     1                                  ; A string of quadwords is given in data segment.
+     2                                  ; Extract all bytes equal to a byte X (also defined in data segment) into string D.
+     3                                  bits 32 ; assembling for the 32 bits architecture
+     4                                  global start        
+     5                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     6                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     7                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+     8                                  segment data use32 class=data
+     9 00000000 887766554433221133-     s dq 1122334455667788h, 1a2b3c4d5e6f3333h
+     9 00000009 336F5E4D3C2B1A     
+    10                                  ls equ ($-s)/8 ; 1 quad = 8 bytes
+    11                                  
+    12 00000010 33                      x db 33h
+    13                                  
+    14 00000011 FF<rept>                d  times ls*8 db  -1
+    15                                  
+    16                                  segment code use32 class=code
+    17                                      start:
+    18 00000000 B910000000                      mov ecx, ls*8  ; 16 = 2 quad = 16 bytes
+    19 00000005 BE00000000                      mov esi, 0 ; s
+    20 0000000A BF00000000                      mov edi, 0; d
+    21                                          repeta:
+    22 0000000F 8A86[00000000]                      mov al, byte[s+esi]
+    23 00000015 3A05[10000000]                      cmp al, byte[x]
+    24 0000001B 7402                                JE addinR
+    25 0000001D 750A                                JNE next
+    26                                              
+    27                                                  addinR:
+    28 0000001F 8887[11000000]                              mov [d+edi], al
+    29 00000025 47                                          inc edi
+    30 00000026 46                                          inc esi
+    31                                                      
+    32 00000027 EB01                                        jmp end_repeta
+    33                                                  next:
+    34 00000029 46                                          inc esi
+    35                                          end_repeta:
+    36 0000002A E2E3                            loop repeta
+    37                                          
+    38                                         
+    39                                         
+    40                                      
+    41                                          ; exit(0)
+    42 0000002C 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    43 0000002E FF15[00000000]                  call    [exit]       ; call exit to terminate the program

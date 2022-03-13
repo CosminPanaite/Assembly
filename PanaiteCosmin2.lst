@@ -1,0 +1,95 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 010203070EF9                a db 1,2,3,7,14,-7
+    15                                      lena equ ($-a)
+    16 00000006 071504                      b db 7,21,4
+    17                                      lenb equ ($-b)
+    18 00000009 00<rept>                    d times lena+lenb db 0
+    19 00000012 07                          sapte db 7
+    20                                  ; our code starts here
+    21                                  segment code use32 class=code
+    22                                      start:
+    23                                          ; ...
+    24                                  
+    25 00000000 BE00000000                  mov esi ,0
+    26 00000005 BF00000000                  mov edi ,0
+    27 0000000A B906000000                  mov ecx , lena
+    28                                      myLoop1:
+    29 0000000F 8A86[00000000]                  mov al , [a+esi]
+    30 00000015 88C3                            mov bl,al
+    31 00000017 3C00                            cmp al,0
+    32 00000019 7F05                                JG pozitiv
+    33 0000001B 7C00                                JL negativ
+    34                                                  negativ:
+    35 0000001D 46                                          inc esi
+    36 0000001E EB1A                                        jmp final
+    37                                             pozitiv :
+    38 00000020 6698                                    cbw
+    39 00000022 F63D[12000000]                          idiv byte[sapte]
+    40                                                     
+    41 00000028 80FC00                                     cmp ah,0
+    42 0000002B 7402                                            JE multiplu7
+    43 0000002D 750A                                            JNE nonmultiplu
+    44                                                          multiplu7:
+    45 0000002F 889F[09000000]                                      mov [d+edi],bl
+    46                                                              
+    47 00000035 46                                                  inc esi
+    48 00000036 47                                                  inc edi
+    49 00000037 EB01                                                jmp final
+    50                                                          nonmultiplu :
+    51 00000039 46                                                  inc esi
+    52                                                              
+    53                                                               
+    54                                              
+    55                                              final:
+    56 0000003A E2D3                               loop myLoop1
+    57                                          
+    58                                      
+    59 0000003C BE00000000                  mov esi ,0
+    60 00000041 BF00000000                  mov edi ,0
+    61 00000046 B903000000                  mov ecx , lenb
+    62                                      myLoop2:
+    63 0000004B 8A86[06000000]                  mov al , [b+esi]
+    64 00000051 88C3                            mov bl, al
+    65 00000053 80FC00                          cmp ah,0
+    66 00000056 7D05                                JGE pozitiv2
+    67 00000058 7C00                                JL negativ2
+    68                                                  negativ2:
+    69 0000005A 46                                          inc esi
+    70 0000005B EB1A                                        jmp final2
+    71                                             pozitiv2 :
+    72                                                  
+    73 0000005D 6698                                    cbw
+    74 0000005F F63D[12000000]                          idiv byte[sapte]
+    75                                                     
+    76 00000065 80FC00                                     cmp ah,0
+    77 00000068 7402                                            JE multiplu72
+    78 0000006A 750A                                            JNE nonmultiplu2
+    79                                                          multiplu72:
+    80 0000006C 889F[09000000]                                      mov [d+edi],bl
+    81                                                              
+    82 00000072 46                                                  inc esi
+    83 00000073 47                                                  inc edi
+    84 00000074 EB01                                                jmp final2
+    85                                                          nonmultiplu2 :
+    86 00000076 46                                                  inc esi
+    87                                                               
+    88                                              
+    89                                              final2:
+    90 00000077 E2D2                               loop myLoop2
+    91                                          
+    92                                      
+    93                                  ; ; exit(0)
+    94 00000079 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    95 0000007B FF15[00000000]                  call    [exit]       ; call exit to terminate the program
